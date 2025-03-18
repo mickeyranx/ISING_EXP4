@@ -13,6 +13,7 @@
 #include "test.h"
 #include <string>
 #include <fstream>
+#include <bitset>
 using namespace std;
 
 
@@ -58,8 +59,8 @@ static double approxGaussianIntegral(int sample_size) {
     return (upper - lower) * sum/sample_size;
     
 }
-
-static void approximatonOfPi(int sample_size) {
+//approximation of PI witch MC (A1 a)
+static double approximatonOfPi(int sample_size) {
     random_device rand_dev; 
     mt19937 gen(rand_dev());
     uniform_real_distribution<double> unif_distr(-1.0, 1.0);
@@ -77,15 +78,96 @@ static void approximatonOfPi(int sample_size) {
 
     }
 
-    cout << 4 * circle / double(square) << endl;
+    return 4 * circle / double(square);
 
 }
 
-//return a small list of 4 indices of Positions of the neighbors (top, right, bottom, left)
+//backtrack algorithm to invoke all possible configurations of a LxL lattice 
+static void backtrack(int L, int counter, vector<int> config, vector<vector<int>>& list_of_configs) {
+    if (counter >= pow(L, 2)) {
+        list_of_configs.push_back(config);
+        return;
+    }
+    config.push_back(1);
+    counter++;
+    backtrack(L, counter, config, list_of_configs);
+
+    counter--;
+    config.pop_back();
+    config.push_back(0);
+    counter++;
+    backtrack(L, counter, config, list_of_configs);
+    return;
+
+}
+
+//calculates the mean energy pp, mean absolute magnetism pp 
+//and mean magnetism pp explicitly with the partition function over all possible configurations
+static void explicitIsing(int L) {
+    //-----------------------------------
+    //               setup
+    //-----------------------------------
+    //list of all possible configurations
+    vector<vector<int>> list_of_configs = {};
+    //create all configs with backtrack-algorithm
+    backtrack(L, 0, {}, list_of_configs);
+    cout << list_of_configs.size() << endl;
+    //initialize list of betas
+    vector<double> betas = {};
+    for (double i = 0; i <= 1; i+= 0.05)
+    {
+        betas.push_back(i);
+    }
+    double K = (double) L * L;
+    //-----------------------------------
+    //      calculate observables
+    //-----------------------------------
+    ofstream File("explicit_vals_L=" + to_string(L) + ".txt");
+    File << "beta" << "\t" << "<e>" << "\t" << "<m>" << "\t" << "<|m|>" << "\n";
+    File << fixed << setprecision(7);
+    for (double beta : betas) {
+        //1.partition-function
+        double Z = 0;
+        vector<double> energies = {};
+        for (vector<int> config : list_of_configs) {
+            double H = Simulation::averageEnergy(K,L , 0, config);
+            energies.push_back(H);
+            Z += exp(-beta * H);
+        }
+
+        //2. mean energy pp, mean magnetism pp, mean absolute magnetism pp
+        double mean_energy = 0;
+        double mean_mag = 0;
+        double mean_abs_mag = 0;
+        int i = 0;
+        for (vector<int> config : list_of_configs) {
+            double H_i = energies[i];
+            mean_energy += 1 / K * 1 / Z * exp(-beta * H_i) * H_i;
+            double M_i = Simulation::averageMagnetisation(K, config);
+            mean_mag += 1 / K * 1 / Z * M_i * exp(-beta * H_i);
+            mean_abs_mag += 1 / K * 1 / Z * abs(M_i) * exp(-beta * H_i);
+            i++;
+        }
+
+        File << beta << "\t" << mean_energy << "\t" << mean_mag << "\t" << mean_abs_mag << "\n";
+
+
+    }
+    
+    File.close();
+
+
+
+
+
+}
+
+
 
 int main()
 {
 
+    clock_t start = clock();
     /*TODO
     -implement external magnetic field coupling h 
     -implement write to file
@@ -93,14 +175,30 @@ int main()
     -start making measurements with changing params
     */
 
+    //--------------------------------------------
+    //                 exercise 1
+    //--------------------------------------------
+    /*
+    printf("approximation of PI: %.3f", approximatonOfPi(10000));
+    printf("\napproximation of gaussian integral: %.4f", approxGaussianIntegral(50000));
+    */
+
+    //--------------------------------------------
+    //                 exercise 2
+    //--------------------------------------------
+    /*
+    explicitIsing(2);
+    explicitIsing(3);
+    explicitIsing(4);
+    */
+    //--------------------------------------------
+    //                 exercise 3
+    //--------------------------------------------
 
 
 
-    approximatonOfPi(10000);
-    //cout << approxGaussianIntegral(40000) << endl;
 
-
-    clock_t start = clock();
+    
     
     //controll variables
     double beta = 0.6;
@@ -110,10 +208,10 @@ int main()
     int draw_interval = 2;
     int number_of_draws = 400;
     //name of file to write data
-    string filename = "test.txt";
+    //string filename = "test.txt";
 
     //create file
-    ofstream data_file(filename);
+    //ofstream data_file(filename);
 
     /*
 
@@ -135,12 +233,12 @@ int main()
 
 
     }
-
     data_file.close();
+    */
     clock_t end = clock();
     double elapsed = double(end - start) / CLOCKS_PER_SEC;
     printf("execution time: %.3f sec", elapsed);
-    */
+    
 }
 
 //sources

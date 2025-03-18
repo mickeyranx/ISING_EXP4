@@ -7,7 +7,6 @@ using namespace std;
 
 
 
-
 vector<int> Simulation::config_1 = {};
 vector<int> Simulation::config_2 = {};
 int Simulation::L = 0;
@@ -311,6 +310,22 @@ double Simulation::averageEnergy() {
     return 1/(pow(L,2)) * sum;
 }
 
+double Simulation::averageEnergy(int K, int L ,double h, vector<int> &config) {
+    double sum = 0;
+    for (int i = 0; i < K; i++) //iterate over all lattice points
+    {
+        int s = config[i];
+        vector<int> neigbors = getNeighborPos(i, L);
+        //calculate Hamiltonian
+        sum += -double(s) * (config[neigbors[1]] + config[neigbors[2]]) - h*s; //only look at 2 neighbors per orientation to avoid double counting
+
+
+    }
+    return sum; //return averaged energy
+}
+
+
+
 double Simulation::averageMagnetisation() {
     double sum = 0;
     for (int i = 0; i < pow(L, 2); i++)
@@ -321,6 +336,19 @@ double Simulation::averageMagnetisation() {
     return 1 / (pow(L, 2)) * abs(sum);
 
 }
+
+double Simulation::averageMagnetisation(int M, vector<int> &config) {
+    double sum = 0;
+    for (int i = 0; i < M; i++)
+    {
+        sum += config[i];
+
+    }
+    return  sum;
+
+}
+
+
 
 
 //for debugging

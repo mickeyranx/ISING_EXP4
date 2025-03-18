@@ -43,7 +43,15 @@ public:
 
     static double averageEnergy();
 
+    static double averageEnergy(int K, int L, double h, vector<int>& config);
+
+    
+
     static double averageMagnetisation();
+
+    static double averageMagnetisation(int M, vector<int>& config);
+
+    
 
     static void printConfig(vector<int>& config);
 

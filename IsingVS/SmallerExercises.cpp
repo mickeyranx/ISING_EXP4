@@ -56,33 +56,3 @@ vector<int> SmallerExercises::Prng(int seed, int iterations) {
 }
 
 
-//approximation of pi with MC-Algorithm (A1 a)
-double SmallerExercises::approxPi(int N) {
-    //number of generated numbers in sqaure and in circle
-    int square = 0;
-    int circle = 0;
-
-
-
-    for (int i = 0; i < N; i++)
-    {
-
-        double a = double(rand() % 1000) / 1000;
-        double b = double(rand() % 1000) / 1000;
-
-        double d = pow(a, 2) + pow(b, 2);
-        if (d <= 1) {
-            circle++;
-        }
-        square++;
-    }
-
-    double pi = double(4 * circle) / square;
-
-
-
-    return pi;
-}
-
-
-
