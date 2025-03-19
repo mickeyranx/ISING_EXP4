@@ -10,10 +10,9 @@
 #include <iomanip>
 #include "Simulation.h"
 #include <random>
-#include "test.h"
 #include <string>
 #include <fstream>
-#include <bitset>
+#include <numeric>
 using namespace std;
 
 
@@ -130,7 +129,7 @@ static void explicitIsing(int L) {
         double Z = 0;
         vector<double> energies = {};
         for (vector<int> config : list_of_configs) {
-            double H = Simulation::averageEnergy(K,L , 0, config);
+            double H = Simulation::averageEnergy(config, K,L , 0 );
             energies.push_back(H);
             Z += exp(-beta * H);
         }
@@ -162,14 +161,71 @@ static void explicitIsing(int L) {
 
 }
 
+//Simulation for exercises 3 and 4
+static vector<double> startSimulation(int L, double beta, double h,int therm_steps, int N, int draw_interval) {
+    //------------------------------
+    //            setup
+    //------------------------------
+    Simulation::initRNG();
+
+    vector<int> config = Simulation::initializeLatticeCold(L);
+    //vector<int> config = Simulation::initializeLatticeHot(L);
+    for (int i = 0; i < therm_steps; i++)
+    {
+        //Simulation::sweepHeatbath(config, L, beta, h);
+        Simulation::sweepMetropolisMultihit(config, L, beta, h, 5);
+    }
+
+    //Observables
+    vector<double> energies1(N, 0);
+    vector<double> energies2(N, 0);
+    vector<double> absmag1(N, 0);
+    vector<double> absmag2(N, 0);
+    vector<double> mag1(N, 0);
+    vector<double> mag2(N, 0);
+    //------------------------------
+    //            sweeps
+    //------------------------------
+    double K = (double) L * L;
+    for (int i = 0; i < N; i++)
+    {
+        Simulation::draw(config, L ,beta , h , draw_interval);
+        double E = Simulation::averageEnergy(config, L*L, L, h);
+        energies1[i] = E/K;
+        energies2[i] = E/K * E/K;
+        double M = Simulation::averageMagnetisation(L * L, config);
+        double absmag_i = abs(M) / K;
+        absmag1[i] = absmag_i;
+        absmag2[i] = absmag_i * absmag_i;
+        mag1[i] = M / K;
+        mag2[i] = M / K * M / K;
+    }
+    //------------------------------
+    //    calculate observables
+    //------------------------------
+    vector<double> vals = {};
+    double e_mean = accumulate(energies1.begin(), energies1.end(), 0.0)/ N;
+    double e2_mean = accumulate(energies2.begin(), energies2.end(), 0.0) / N;
+    double m_mean = accumulate(mag1.begin(), mag1.end(), 0.0) / N;
+    double m2_mean = accumulate(mag2.begin(), mag2.end(), 0.0) / N;
+    double absm_mean = accumulate(absmag1.begin(), absmag1.end(), 0.0) / N;
+    double absm2_mean = accumulate(absmag2.begin(), absmag2.end(), 0.0) / N;
+    vals.push_back(e2_mean);
+    vals.push_back(sqrt(abs(pow(e_mean, 2) - e2_mean)) / (N - 1));
+    vals.push_back(m_mean);
+    vals.push_back(sqrt(abs(pow(m_mean, 2) - m2_mean)) / (N - 1));
+    vals.push_back(e2_mean);
+    vals.push_back(sqrt(abs(pow(absm_mean, 2) - absm2_mean)) / (N - 1));
+    return vals;
+   
+}
 
 
 int main()
 {
-
     clock_t start = clock();
     /*TODO
-    -implement external magnetic field coupling h 
+    
     -implement write to file
     -read file in python and evaluate
     -start making measurements with changing params
@@ -192,21 +248,35 @@ int main()
     explicitIsing(4);
     */
     //--------------------------------------------
-    //                 exercise 3
+    //          exercises 3 & 4
     //--------------------------------------------
-
-
-
-
     
-    
-    //controll variables
+    /*
+    vector<double> betas = {};
+    for (double beta = 0; beta < 1.05; beta+= 0.05)
+    {
+
+    }
+    */
+
     double beta = 0.6;
     double h = 0;
-    int lattice_length = 100;
     int therm_steps = 0;
-    int draw_interval = 2;
-    int number_of_draws = 400;
+    int draw_interval = 1;
+    
+    int L = 32;
+    //number of draws
+    int N = 1000;
+
+    vector<double> vals = startSimulation(L, beta, h, therm_steps, N, draw_interval);
+    ofstream File("test.txt");
+    File << fixed << setprecision(5);
+    File << "beta" << "\t" << "<e>" << "\t" << "de" << "\t" << "<m>" << "\t" << "dm" << "\t" << "<|m|>" << "\t" << "d|m|" << "\n";
+    File << beta << "\t" << vals[0] << "\t" << vals[1] << "\t" << vals[2] << "\t" << vals[3] << "\t" << vals[4] << "\t" << vals[5] << "\n";
+    File.close();
+    
+    //controll variables
+    
     //name of file to write data
     //string filename = "test.txt";
 
@@ -215,12 +285,7 @@ int main()
 
     /*
 
-    //to change the update algorithm go to init() and draw() in Simulation.cpp and switch via commenting
-    // J is always set to 1
-
-    //thermalize  
-    Simulation::init(lattice_length,therm_steps, beta, h);
-    //
+    
     for (int i = 0; i < number_of_draws; i++)
     {
         tuple<double, double> mean_vals = Simulation::draw(beta, h, draw_interval);

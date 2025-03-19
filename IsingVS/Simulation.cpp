@@ -4,16 +4,14 @@
 #include <tuple>
 using namespace std;
 
+uniform_real_distribution<double> Simulation::distr1 = uniform_real_distribution<double>(0.0, 1.0);
+uniform_int_distribution<int> Simulation::distr2 = uniform_int_distribution<int>(-1, 1);
+random_device Simulation::rand_device;
+mt19937 Simulation::gen = mt19937(rand_device());
 
-
-
-vector<int> Simulation::config_1 = {};
-vector<int> Simulation::config_2 = {};
-int Simulation::L = 0;
-uniform_real_distribution<double> Simulation::distr = uniform_real_distribution<double>(0.0, 1.0);
-default_random_engine Simulation::generator = default_random_engine();
-
-
+//initialization of RNG (mt19937)
+void Simulation::initRNG() {
+}
 
 vector<int> Simulation::initializeLatticeCold(int L) {
     vector<int> lattice(pow(L, 2), 1);
@@ -23,30 +21,18 @@ vector<int> Simulation::initializeLatticeCold(int L) {
 vector<int> Simulation::initializeLatticeHot(int L)
 {
     vector<int> lattice = {};
-    //set current time as seed for rand()
-    srand(time(0));
     for (int i = 0; i < pow(L, 2); i++)
     {
-        //generate random number
-        double p = double(rand() % 101);
-        if (p < 50) {
-            lattice.push_back(-1);
-        }
-        else
-        {
-            lattice.push_back(1);
-        }
-
+        //fill latice with random -1 or 1
+        lattice.push_back(distr2(gen));
     }
-    
     return lattice;
 }
 
-
+//returns the correct indices of neighbors of a position i in the lattice 
 vector<int> Simulation::getNeighborPos(int i, int L) {
     //determine which row we are in
     double row = floor(double(i) / L);
-    //cout << "row = " << row << endl;
     vector<int> neigbor_pos;
 
 
@@ -95,125 +81,76 @@ vector<int> Simulation::getNeighborPos(int i, int L) {
 
         neigbor_pos.push_back(i - 1);
     }
-    //cout << "successfully calculated neighbors" << neigbor_pos.size() << endl;
+   
     return neigbor_pos;
 
 }
 
 
-//change in energy in case of spin flip suggestion
-int Simulation::changeInEnergy(int pos, int s) {
-    vector<int> neighbors = getNeighborPos(pos, L);
-    /*for (int index : neighbors) {
-        cout << "index = " << index << endl;
-    }*/
-    int dH = 2 * s * (config_1[neighbors[0]] + config_1[neighbors[1]] + config_1[neighbors[2]] + config_1[neighbors[3]]);
-    //cout << "calculated energy change successfully" << endl;
-    return double(dH);
-}
-
-int Simulation::changeInEnergy(int pos, int s, double h) {
+//change in energy in case of a spin flip (otherwise the energy does not change)
+double Simulation::changeInEnergy(vector<int> &config_1,int L ,int pos, int s, double h) {
     vector<int> neighbors = getNeighborPos(pos, L);
     
-    int dH = 2 * s * (config_1[neighbors[0]] + config_1[neighbors[1]] + config_1[neighbors[2]] + config_1[neighbors[3]] + h);
+    double dH = 2 * s * (config_1[neighbors[0]] + config_1[neighbors[1]] + config_1[neighbors[2]] + config_1[neighbors[3]] + h);
 
     return double(dH);
 }
 
 
 //Metropolis with spin flip suggestion
-void Simulation::sweepMetropolis(double beta, double h) {
-    for (int i = 0; i < config_1.size(); i++)
+void Simulation::sweepMetropolis(vector<int> &config_1,int L ,double beta, double h) {
+    for (int i = 0; i < L*L; i++)
     {
         //current spin
         int s_i = config_1[i];
-        //sugest spin flip 
-        int s_i_new = -s_i;
-        //calculate change
-        int dH = changeInEnergy(i, s_i, h);
+        //calculate change in ENergy in case of spin flip
+        double dH = changeInEnergy(config_1, L ,i, s_i, h);
 
         if (dH < 0) {
-            config_1[i] = s_i_new;
-            
+            config_1[i] = -s_i; //spin flip
         }
         else {
             //generate random number between 0 and 1
-            
-            double rnd = distr(generator);
+            double rnd = distr1(gen); 
             //double prob = exp(-beta * dH) / (1 + exp(-beta * dH));
-            double prob = exp(-beta * dH);
-
-            //cout << "r must be smaller than " << exp(-beta * dH) << endl;
-            //cout << "r = " << r << endl;
-
-            double scale = pow(10, 10);
-            //cout << "p = " << p << endl;
-            //double b = round(p * scale) / scale;
-            //double a = round(r * scale) / scale;
-
-            //cout << "comparing " << a << " < " << b << endl;
-            if (round(rnd*scale)/scale < round(prob*scale)/scale) {
-                config_1[i] = s_i_new;
-                //cout << "flip accepted randomly" << endl;
-            }
-            else {
-                continue;
-            }
-
-
+            double accep_prob = exp(-beta * dH); //acceptance probability
+            if (rnd < accep_prob) config_1[i] = -s_i;
+          
         }
 
     }
 }
 
-void Simulation::sweepMetropolisMultihit(double beta, double h, int tries) {
-    for (int i = 0; i < config_1.size(); i++)
+//Metropolis with multi-hit
+void Simulation::sweepMetropolisMultihit(vector<int> &config_1, int L ,double beta, double h, int tries) {
+    for (int i = 0; i < L*L; i++)
     {
         int s_i = config_1[i];
         
-               
         for (int j = 0; j < tries; j++)
         {
-            double rnd = distr(generator);
-            //select new random spin
-            int s_i_new = (rnd < 0.5 ? 1 : -1);
-
-
-
+            double rnd = distr1(gen);
+            //select new random spin -1 or 1            
+            int s_i_new = distr2(gen);
             double dH = 0;
             //calculate change in energy
-            if (s_i != s_i_new) {
-                dH = changeInEnergy(i, s_i, h);
-            }
-            
-            
-            if (dH < 0) {
-                config_1[i] = s_i_new;
-                //cout << "flip accepted immideatly" << endl;
-               
-            }
-            else {
+            if (s_i != s_i_new) { //in case of spinflip
+                dH = changeInEnergy(config_1, L,i, s_i, h);
+                if (dH < 0) {
+                    config_1[i] = s_i_new; //accept immediatly if dH < 0
+                    break;
+                }
                 //generate random number between 0 and 1
-                double rnd = distr(generator);
-                double prob = exp(-beta * dH);
-
-                //equalize precision to compare doubles
-                double scale = pow(10, 10);
-                
-                if (round(rnd * scale) / scale < round(prob * scale) / scale) {
-                    config_1[i] = s_i_new;
-                    
+                double rnd = distr1(gen);
+                //calculate acceptance probability
+                double accep_prob = exp(-beta * dH);
+                if (rnd < accep_prob) {
+                    config_1[i] = s_i_new; 
+                    break;
                 }
-                else {
-                    continue;
-                }
-
 
             }
-
-
-
-
+     
         }
 
 
@@ -222,9 +159,9 @@ void Simulation::sweepMetropolisMultihit(double beta, double h, int tries) {
 
 }
 
-
-void Simulation::sweepHeatbath(double beta, double h) {
-    for (int i = 0; i < config_1.size(); i++)
+//Heathbath algorithm
+void Simulation::sweepHeatbath(vector<int> &config_1, int L,double beta, double h) {
+    for (int i = 0; i < L*L; i++)
     {
         int s_i = config_1[i];
 
@@ -236,14 +173,11 @@ void Simulation::sweepHeatbath(double beta, double h) {
       
         //2 values to compare
         double q = exp(k) / z;
-        double r = distr(generator);
+        double r = distr1(gen);
         //transform r,p to same precision
         double scale = pow(10, 10);
         double prob = round(q * scale) / scale;
         double rnd = round(r * scale) / scale;
-
-        //cout << "r must be smaller than " << prob << endl;
-        //cout << "r = " << r << endl;
 
         (rnd < prob) ? config_1[i] = 1 : config_1[i] = -1;
         
@@ -251,91 +185,35 @@ void Simulation::sweepHeatbath(double beta, double h) {
 
 }
 
-void Simulation::init(int lattice_length, int therm_size ,double beta, double h)
-{
-    L = lattice_length;
-    //initialize Lattice and assign to global variables
-    config_1 = initializeLatticeHot(L);
-    //config_1 = initializeLatticeCold(L);
-    //printConfig(config_1);
-    //cout << "\n" << "next config -------" << endl;
-    //copy the spins from config_1 to config_2
-    config_2 = config_1;
-    cout << averageEnergy() << endl;
-
-    //generate seed with current time for rand() function
-    srand(time(0));
-
-    for (int i = 0; i < therm_size; i++)
-    {
-        //sweepMetropolis(beta,h);
-        sweepHeatbath(beta, h);
-
-        //printConfig(config_2);
-        //copies the vector (not the reference)
-        config_1 = config_2;
-        
-       // cout << "\n" << "next config -------" << endl;
-    }
 
 
 
-}
 
-tuple<double, double> Simulation::draw(double beta, double h, int draw_interval) {
+void Simulation::draw(vector<int> &config, int L ,double beta, double h, int draw_interval) {
     for (int i = 0; i < draw_interval; i++)
     {
         //sweepMetropolis(beta, h);
-        sweepMetropolisMultihit(beta, h, 1);
+        sweepMetropolisMultihit(config, L, beta, h, 5);
         //sweepHeatbath(beta, h);
-        //config_1 = config_2;
     }
-    //calculate Observables
-    double E = averageEnergy();
-    double M = averageMagnetisation();
-    //return them 
-    return make_tuple(E, M);
+   
 }
 
-double Simulation::averageEnergy() {
-    double sum = 0;
-    for (int i = 0; i < pow(L,2); i++)
-    {
-        int s = config_1[i];
-        vector<int> neigbors = getNeighborPos(i,L);
-        sum += -double(s)*(config_1[neigbors[1]] + config_1[neigbors[2]]);
-        
-        
-    }
-    return 1/(pow(L,2)) * sum;
-}
 
-double Simulation::averageEnergy(int K, int L ,double h, vector<int> &config) {
+double Simulation::averageEnergy(vector<int>& config, int K, int L ,double h) {
     double sum = 0;
     for (int i = 0; i < K; i++) //iterate over all lattice points
     {
         int s = config[i];
         vector<int> neigbors = getNeighborPos(i, L);
         //calculate Hamiltonian
-        sum += -double(s) * (config[neigbors[1]] + config[neigbors[2]]) - h*s; //only look at 2 neighbors per orientation to avoid double counting
+        sum += -double(s) * (config[neigbors[1]] + config[neigbors[2]]) - (double) h*s; //only look at 2 neighbors per orientation to avoid double counting
 
 
     }
     return sum; //return averaged energy
 }
 
-
-
-double Simulation::averageMagnetisation() {
-    double sum = 0;
-    for (int i = 0; i < pow(L, 2); i++)
-    {
-        sum += config_1[i];
-
-    }
-    return 1 / (pow(L, 2)) * abs(sum);
-
-}
 
 double Simulation::averageMagnetisation(int M, vector<int> &config) {
     double sum = 0;

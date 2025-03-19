@@ -24,15 +24,9 @@
     <ClCompile Include="Simulation.cpp">
       <Filter>Quelldateien</Filter>
     </ClCompile>
-    <ClCompile Include="test.cpp">
-      <Filter>Quelldateien</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Simulation.h">
-      <Filter>Headerdateien</Filter>
-    </ClInclude>
-    <ClInclude Include="test.h">
       <Filter>Headerdateien</Filter>
     </ClInclude>
   </ItemGroup>
