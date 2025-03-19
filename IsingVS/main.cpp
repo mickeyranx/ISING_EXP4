@@ -224,13 +224,6 @@ static vector<double> startSimulation(int L, double beta, double h,int therm_ste
 int main()
 {
     clock_t start = clock();
-    /*TODO
-    
-    -implement write to file
-    -read file in python and evaluate
-    -start making measurements with changing params
-    */
-
     //--------------------------------------------
     //                 exercise 1
     //--------------------------------------------
@@ -250,7 +243,12 @@ int main()
     //--------------------------------------------
     //          exercises 3 & 4
     //--------------------------------------------
-    
+    /* 
+    !!!to alter algorithm of choice 
+    go to startSimulation() and draw()
+    and switch via commenting!!!
+    */
+
     /*
     vector<double> betas = {};
     for (double beta = 0; beta < 1.05; beta+= 0.05)
@@ -258,13 +256,16 @@ int main()
 
     }
     */
-
+    //temperature
     double beta = 0.6;
+    //external magnetic field
     double h = 0;
+    //number of thermalize sweeps
     int therm_steps = 0;
+    //sweeps between drawing
     int draw_interval = 1;
-    
-    int L = 32;
+    //lattice size
+    int L = 32; //actual size is LxL
     //number of draws
     int N = 1000;
 
@@ -275,36 +276,12 @@ int main()
     File << beta << "\t" << vals[0] << "\t" << vals[1] << "\t" << vals[2] << "\t" << vals[3] << "\t" << vals[4] << "\t" << vals[5] << "\n";
     File.close();
     
-    //controll variables
     
-    //name of file to write data
-    //string filename = "test.txt";
 
-    //create file
-    //ofstream data_file(filename);
-
-    /*
-
-    
-    for (int i = 0; i < number_of_draws; i++)
-    {
-        tuple<double, double> mean_vals = Simulation::draw(beta, h, draw_interval);
-        //cout << "E = " << fixed << setprecision(7) << get<0>(mean_vals) << ", M = " << get<1>(mean_vals) << endl;
-
-
-        //write to data file with format E E_err kap kap_err M M_ERR
-        data_file << fixed << setprecision(7) << get<1>(mean_vals) << "\n";
-
-
-
-    }
-    data_file.close();
-    */
+   
     clock_t end = clock();
     double elapsed = double(end - start) / CLOCKS_PER_SEC;
     printf("execution time: %.3f sec", elapsed);
     
 }
 
-//sources
-//measure execution time (code from https://levelup.gitconnected.com/8-ways-to-measure-execution-time-in-c-c-48634458d0f9#:~:text=The%20function%20clock()%20returns,has%20been%20running%2C%20in%20seconds)
