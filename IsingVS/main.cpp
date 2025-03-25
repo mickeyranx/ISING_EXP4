@@ -168,8 +168,8 @@ static vector<double> startSimulation(int L, double beta, double h,int therm_ste
     //------------------------------
     Simulation::initRNG();
 
-    vector<int> config = Simulation::initializeLatticeCold(L);
-    //vector<int> config = Simulation::initializeLatticeHot(L);
+    //vector<int> config = Simulation::initializeLatticeCold(L);
+    vector<int> config = Simulation::initializeLatticeHot(L);
     for (int i = 0; i < therm_steps; i++)
     {
         //Simulation::sweepHeatbath(config, L, beta, h);
@@ -200,10 +200,31 @@ static vector<double> startSimulation(int L, double beta, double h,int therm_ste
         mag1[i] = M / K;
         mag2[i] = M / K * M / K;
     }
+
+     
+    //this part is for testing optilam thermalization and multihit-parameter
+    ofstream File("testing_params.txt");
+    File << fixed << setprecision(5);
+    File << "beta" << "\t" << "<e>" << "\t" << "de" << "\t" << "<m>" << "\t" << "dm" << "\t" << "<|m|>" << "\t" << "d|m|" << "\n";
+    for (int i = 0; i < energies1.size(); i++)
+    {
+       
+        File << beta << "\t" << energies1[i] << "\t" << 0 << "\t" << mag1[i] << "\t" << 0 << "\t" << absmag1[i] << "\t" << 0 << "\n";
+        
+    }
+    
+    File.close();
+
+
+
+    
+
+
     //------------------------------
     //    calculate observables
     //------------------------------
     vector<double> vals = {};
+    /*
     double e_mean = accumulate(energies1.begin(), energies1.end(), 0.0)/ N;
     double e2_mean = accumulate(energies2.begin(), energies2.end(), 0.0) / N;
     double m_mean = accumulate(mag1.begin(), mag1.end(), 0.0) / N;
@@ -216,6 +237,7 @@ static vector<double> startSimulation(int L, double beta, double h,int therm_ste
     vals.push_back(sqrt(abs(pow(m_mean, 2) - m2_mean)) / (N - 1));
     vals.push_back(e2_mean);
     vals.push_back(sqrt(abs(pow(absm_mean, 2) - absm2_mean)) / (N - 1));
+    */
     return vals;
    
 }
@@ -257,7 +279,7 @@ int main()
     }
     */
     //temperature
-    double beta = 0.6;
+    double beta = 0.2;
     //external magnetic field
     double h = 0;
     //number of thermalize sweeps
@@ -265,16 +287,16 @@ int main()
     //sweeps between drawing
     int draw_interval = 1;
     //lattice size
-    int L = 32; //actual size is LxL
+    int L = 128; //actual size is LxL
     //number of draws
-    int N = 1000;
+    int N = 250;
 
     vector<double> vals = startSimulation(L, beta, h, therm_steps, N, draw_interval);
-    ofstream File("test.txt");
-    File << fixed << setprecision(5);
-    File << "beta" << "\t" << "<e>" << "\t" << "de" << "\t" << "<m>" << "\t" << "dm" << "\t" << "<|m|>" << "\t" << "d|m|" << "\n";
-    File << beta << "\t" << vals[0] << "\t" << vals[1] << "\t" << vals[2] << "\t" << vals[3] << "\t" << vals[4] << "\t" << vals[5] << "\n";
-    File.close();
+    //ofstream File("test.txt");
+    //File << fixed << setprecision(5);
+    //File << "beta" << "\t" << "<e>" << "\t" << "de" << "\t" << "<m>" << "\t" << "dm" << "\t" << "<|m|>" << "\t" << "d|m|" << "\n";
+    //File << beta << "\t" << vals[0] << "\t" << vals[1] << "\t" << vals[2] << "\t" << vals[3] << "\t" << vals[4] << "\t" << vals[5] << "\n";
+    //File.close();
     
     
 

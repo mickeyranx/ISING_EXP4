@@ -172,14 +172,14 @@ void Simulation::sweepHeatbath(vector<int> &config_1, int L,double beta, double 
         double z = 2 * cosh(k);
       
         //2 values to compare
-        double q = exp(k) / z;
+        double q = exp(-k) / z;
         double r = distr1(gen);
         //transform r,p to same precision
         double scale = pow(10, 10);
-        double prob = round(q * scale) / scale;
-        double rnd = round(r * scale) / scale;
+        //double prob = round(q * scale) / scale;
+       // double rnd = round(r * scale) / scale;
 
-        (rnd < prob) ? config_1[i] = 1 : config_1[i] = -1;
+        (r < q) ? config_1[i] = 1 : config_1[i] = -1;
         
     }
 
@@ -193,8 +193,8 @@ void Simulation::draw(vector<int> &config, int L ,double beta, double h, int dra
     for (int i = 0; i < draw_interval; i++)
     {
         //sweepMetropolis(beta, h);
-        sweepMetropolisMultihit(config, L, beta, h, 5);
-        //sweepHeatbath(beta, h);
+        //sweepMetropolisMultihit(config, L, beta, h, 8);
+        sweepHeatbath(config, L , beta, h);
     }
    
 }
