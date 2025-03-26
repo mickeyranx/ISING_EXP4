@@ -93,7 +93,7 @@ static void backtrack(int L, int counter, vector<int> config, vector<vector<int>
 
     counter--;
     config.pop_back();
-    config.push_back(0);
+    config.push_back(-1);
     counter++;
     backtrack(L, counter, config, list_of_configs);
     return;
@@ -112,11 +112,7 @@ static void explicitIsing(int L) {
     backtrack(L, 0, {}, list_of_configs);
     cout << list_of_configs.size() << endl;
     //initialize list of betas
-    vector<double> betas = {};
-    for (double i = 0; i <= 1; i+= 0.05)
-    {
-        betas.push_back(i);
-    }
+    vector<double> betas = {0.1, 0.2, 0.3, 0.35, 0.4, 0.415, 0.44, 0.4406868, 0.445, 0.45, 0.465, 0.48, 0.5, 0.55, 0.6, 0.7, 0.9};
     double K = (double) L * L;
     //-----------------------------------
     //      calculate observables
@@ -129,7 +125,7 @@ static void explicitIsing(int L) {
         double Z = 0;
         vector<double> energies = {};
         for (vector<int> config : list_of_configs) {
-            double H = Simulation::averageEnergy(config, L*L,L , 0 );
+            double H = Simulation::averageEnergy(config, L*L,L , 0 )*L*L;
             energies.push_back(H);
             Z += exp(-beta * H);
         }
@@ -141,10 +137,10 @@ static void explicitIsing(int L) {
         int i = 0;
         for (vector<int> config : list_of_configs) {
             double H_i = energies[i];
-            mean_energy += 1 / K * 1 / Z * exp(-beta * H_i) * H_i;
+            mean_energy += 1.0 / Z * exp(-beta * H_i) * H_i / ((double)L * L);
             double M_i = Simulation::averageMagnetisation(K, config);
-            mean_mag += 1 / K * 1 / Z * M_i * exp(-beta * H_i);
-            mean_abs_mag += 1 / K * 1 / Z * abs(M_i) * exp(-beta * H_i);
+            mean_mag += 1.0 / (K*Z) *  M_i * exp(-beta * H_i);
+            mean_abs_mag += 1.0 / (K*Z) * abs(M_i) * exp(-beta * H_i);
             i++;
         }
 
@@ -247,6 +243,7 @@ static vector<double> startSimulation(int L, double beta, double h,int therm_ste
     vals.push_back(sqrt(abs(pow(absm_mean, 2) - absm2_mean)) / (N - 1));
     vals.push_back(beta * beta * (e2_mean - e_mean * e_mean)); //specific heat
     vals.push_back(e2_mean);
+    vals.push_back(m2_mean);
     return vals;
    
 }
@@ -274,6 +271,7 @@ int main()
     //--------------------------------------------
     //          exercises 3 & 4
     //--------------------------------------------
+    
     /* 
     !!!to alter algorithm of choice 
     go to startSimulation() and draw()
@@ -296,28 +294,31 @@ int main()
     //sweeps between drawing
     int draw_interval = 20;
     //lattice size
-    int L = 128; //actual size is LxL
+    int L = 32; //actual size is LxL
     //number of draws
-    int N = 500; //actual number of sweeps is draw_interval * N
+    int N = 10000; //actual number of sweeps is draw_interval * N
     //vector<double> betas = { 0.9, 0.7, 0.6, 0.55, 0.5 }; //beta with coldstart
     //vector<double> betas = { 0.1, 0.2, 0.3,0.35 }; //bet with hotstart
     //vector<double> betas = {0.445,0.45, 0.465, 0.48}; //beta near critial coldstart
-    vector<double> betas = {0.4, 0.415, 0.43, 0.44};
+    //vector<double> betas = {0.4, 0.415, 0.43, 0.44};
+
+    
+    vector<double> betas = {0.4406868};
     for (double beta : betas)
     {
-        string filename = "128_Heatbath_beta=" + to_string(beta) + ".txt";
+        string filename = to_string(L) + "_Heatbath_beta=" + to_string(beta) + ".txt";
         vector<double> vals = startSimulation(L, beta, h, therm_steps, N, draw_interval, true);
         ofstream File(filename);
         File << fixed << setprecision(8);
         File << "beta" << "\t" << "<e>" << "\t" << "de" << "\t" << "<m>" << "\t" << "dm" << "\t";
-        File << "<|m|>" << "\t" << "d|m|" << "\t" << "c_v" << "\t" << "<e^2>" << "\n";
+        File << "<|m|>" << "\t" << "d|m|" << "\t" << "c_v/(L^2)" << "\t" << "<e^2>" << "\t" << "<m^2>" << "\n";
         File << beta << "\t" << vals[0] << "\t" << vals[1] << "\t" << vals[2] << "\t" << vals[3] << "\t" << vals[4] << "\t";
-        File << vals[5] << "\t" << vals[6] << "\t" << vals[7] << "\n";
+        File << vals[5] << "\t" << vals[6] << "\t" << vals[7] << "\t" << vals[8] << "\n";
         File.close();
 
     }
 
-    
+   
     
     
 
