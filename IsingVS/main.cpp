@@ -240,6 +240,7 @@ static vector<double> startSimulation(int L, double beta, double h,int therm_ste
     vals.push_back(e2_mean);
     vals.push_back(sqrt(abs(pow(absm_mean, 2) - absm2_mean)) / (N - 1));
     vals.push_back(beta * beta * (absm2_mean - absm_mean * absm_mean) / ((double)(L * L))); //specific heat
+    
     return vals;
    
 }
@@ -281,22 +282,23 @@ int main()
     }
     */
     //temperature
-    double beta = 0.9;
+    double beta = 0.44;
     //external magnetic field
     double h = 0;
     //number of thermalize sweeps
-    int therm_steps = 10000;
+    int therm_steps = 0;
     //sweeps between drawing
-    int draw_interval = 20;
+    int draw_interval = 1;
     //lattice size
     int L = 128; //actual size is LxL
     //number of draws
-    int N = 800; //actual number of sweeps is draw_interval * N
+    int N = 32; //actual number of sweeps is draw_interval * N
 
     string filename = "";
    
-
+    
     vector<double> vals = startSimulation(L, beta, h, therm_steps, N, draw_interval);
+    
     ofstream File("test.txt");
     File << fixed << setprecision(5);
     File << "beta" << "\t" << "<e>" << "\t" << "de" << "\t" << "<m>" << "\t" << "dm" << "\t" << "<|m|>" << "\t" << "d|m|" << "\t" << "c_v" << "\n";
