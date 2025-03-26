@@ -5,13 +5,11 @@
 using namespace std;
 
 uniform_real_distribution<double> Simulation::distr1 = uniform_real_distribution<double>(0.0, 1.0);
-uniform_int_distribution<int> Simulation::distr2 = uniform_int_distribution<int>(-1, 1);
+uniform_int_distribution<int> Simulation::distr2 = uniform_int_distribution<int>(0, 1);
 random_device Simulation::rand_device;
 mt19937 Simulation::gen = mt19937(rand_device());
+//default_random_engine Simulation::gen2 = default_random_engine();
 
-//initialization of RNG (mt19937)
-void Simulation::initRNG() {
-}
 
 vector<int> Simulation::initializeLatticeCold(int L) {
     vector<int> lattice(pow(L, 2), 1);
@@ -23,8 +21,9 @@ vector<int> Simulation::initializeLatticeHot(int L)
     vector<int> lattice = {};
     for (int i = 0; i < pow(L, 2); i++)
     {
+        int r = distr2(gen);
         //fill latice with random -1 or 1
-        lattice.push_back(distr2(gen));
+        lattice.push_back((r < 1) ? -1 :  1);
     }
     return lattice;
 }
@@ -114,7 +113,8 @@ void Simulation::sweepMetropolis(vector<int> &config_1,int L ,double beta, doubl
             double rnd = distr1(gen); 
             //double prob = exp(-beta * dH) / (1 + exp(-beta * dH));
             double accep_prob = exp(-beta * dH); //acceptance probability
-            if (rnd < accep_prob) config_1[i] = -s_i;
+            double scale = pow(10, 10);
+            if (round(rnd * scale) / scale < round(accep_prob * scale) / scale) config_1[i] = -s_i;
           
         }
 
@@ -131,7 +131,7 @@ void Simulation::sweepMetropolisMultihit(vector<int> &config_1, int L ,double be
         {
             double rnd = distr1(gen);
             //select new random spin -1 or 1            
-            int s_i_new = distr2(gen);
+            int s_i_new = (distr2(gen) == 0) ? -1 : 1;
             double dH = 0;
             //calculate change in energy
             if (s_i != s_i_new) { //in case of spinflip
@@ -163,22 +163,26 @@ void Simulation::sweepMetropolisMultihit(vector<int> &config_1, int L ,double be
 void Simulation::sweepHeatbath(vector<int> &config_1, int L,double beta, double h) {
     for (int i = 0; i < L*L; i++)
     {
-        int s_i = config_1[i];
+        //int s_i = config_1[i];
 
         vector<int> neighbors = getNeighborPos(i, L);
 
-        double delta = (config_1[neighbors[0]] + config_1[neighbors[1]] + config_1[neighbors[2]] + config_1[neighbors[3]]);
-        double k = beta * (delta + h);
-        double z = 2 * cosh(k);
+        int delta = (config_1[neighbors[0]] + config_1[neighbors[1]] + config_1[neighbors[2]] + config_1[neighbors[3]]);
+        double k = beta * ((double) delta + h);
+        //double z = 2 * cosh(k);
       
         //2 values to compare
-        double q = exp(-k) / z;
+        double q = 1.0 / (1.0 + exp(-2.0 * k));
+        
+        //double q = exp(-k) / z;
         double r = distr1(gen);
-        //transform r,p to same precision
-        double scale = pow(10, 10);
-        //double prob = round(q * scale) / scale;
-       // double rnd = round(r * scale) / scale;
 
+        //cout << "q = " << q << ", r = " << r << " " << (r < q) << endl;
+
+        //transform r,p to same precision
+        //double scale = pow(10, 10);
+        //double prob = round(q * scale) / scale;
+        //double rnd = round(r * scale) / scale;
         (r < q) ? config_1[i] = 1 : config_1[i] = -1;
         
     }
@@ -192,8 +196,8 @@ void Simulation::sweepHeatbath(vector<int> &config_1, int L,double beta, double 
 void Simulation::draw(vector<int> &config, int L ,double beta, double h, int draw_interval) {
     for (int i = 0; i < draw_interval; i++)
     {
-        //sweepMetropolis(beta, h);
-        //sweepMetropolisMultihit(config, L, beta, h, 8);
+        //sweepMetropolis(config, L, beta, h);
+        //sweepMetropolisMultihit(config, L, beta, h, 5);
         sweepHeatbath(config, L , beta, h);
     }
    
@@ -201,17 +205,17 @@ void Simulation::draw(vector<int> &config, int L ,double beta, double h, int dra
 
 
 double Simulation::averageEnergy(vector<int>& config, int K, int L ,double h) {
+   
     double sum = 0;
     for (int i = 0; i < K; i++) //iterate over all lattice points
     {
         int s = config[i];
         vector<int> neigbors = getNeighborPos(i, L);
         //calculate Hamiltonian
-        sum += -double(s) * (config[neigbors[1]] + config[neigbors[2]]) - (double) h*s; //only look at 2 neighbors per orientation to avoid double counting
-
+        sum += (double) -s * (config[neigbors[0]] + config[neigbors[1]]) - (double)h * s;//only look at 2 neighbors per orientation to avoid double counting
 
     }
-    return sum; //return averaged energy
+    return sum/K; //return averaged energy
 }
 
 

@@ -2,12 +2,12 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np 
 
-
+path="C:/Users/Miki/uni/CPPrakt/ISING_V4/ISING_EXP4/IsingVS/"
 
 #determine optimal multihit parameter and thermal steps
 def exercise3a():
     
-    df = pd.read_table("testing_params.txt") 
+    df = pd.read_table(path+"testing_params.txt") 
     e = df.iloc[:, 1]
     m = df.iloc[:, 3]
     it = np.arange(0,len(m), step = 1)

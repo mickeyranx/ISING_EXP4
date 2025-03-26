@@ -17,7 +17,7 @@ using namespace std;
 
 
 
-// RNG with the box müller method
+// RNG with the box mï¿½ller method
 static double boxMueller(double mu, double sigma) {
     //Zufallszahlen aus GLeichverteilung
     random_device rand_dev;
@@ -38,7 +38,7 @@ static double approxGaussianIntegral(int sample_size) {
     double sigma = 1;
     double sum = 0;
     set<double> x_values;
-    //calculate with box-müller
+    //calculate with box-mï¿½ller
     for (int i = 0; i < sample_size; i++)
     {
         double x = boxMueller(0, sigma);
@@ -129,7 +129,7 @@ static void explicitIsing(int L) {
         double Z = 0;
         vector<double> energies = {};
         for (vector<int> config : list_of_configs) {
-            double H = Simulation::averageEnergy(config, K,L , 0 );
+            double H = Simulation::averageEnergy(config, L*L,L , 0 );
             energies.push_back(H);
             Z += exp(-beta * H);
         }
@@ -166,7 +166,7 @@ static vector<double> startSimulation(int L, double beta, double h,int therm_ste
     //------------------------------
     //            setup
     //------------------------------
-    Simulation::initRNG();
+    
 
     //vector<int> config = Simulation::initializeLatticeCold(L);
     vector<int> config = Simulation::initializeLatticeHot(L);
@@ -186,13 +186,13 @@ static vector<double> startSimulation(int L, double beta, double h,int therm_ste
     //------------------------------
     //            sweeps
     //------------------------------
-    double K = (double) L * L;
+    int K = L * L;
     for (int i = 0; i < N; i++)
     {
         Simulation::draw(config, L ,beta , h , draw_interval);
-        double E = Simulation::averageEnergy(config, L*L, L, h);
-        energies1[i] = E/K;
-        energies2[i] = E/K * E/K;
+        double E = Simulation::averageEnergy(config, K, L, h);
+        energies1[i] = E;
+        energies2[i] = E * E;
         double M = Simulation::averageMagnetisation(L * L, config);
         double absmag_i = abs(M) / K;
         absmag1[i] = absmag_i;
@@ -279,7 +279,7 @@ int main()
     }
     */
     //temperature
-    double beta = 0.2;
+    double beta = 0.9;
     //external magnetic field
     double h = 0;
     //number of thermalize sweeps
@@ -289,7 +289,10 @@ int main()
     //lattice size
     int L = 128; //actual size is LxL
     //number of draws
-    int N = 250;
+    int N = 2000;
+
+    
+   
 
     vector<double> vals = startSimulation(L, beta, h, therm_steps, N, draw_interval);
     //ofstream File("test.txt");

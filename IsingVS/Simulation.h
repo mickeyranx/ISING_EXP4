@@ -10,7 +10,7 @@ public:
     static uniform_int_distribution<int> distr2;
     static random_device rand_device;
 
-    static void initRNG();
+    
 
     static vector<int> initializeLatticeCold(int L);
 
