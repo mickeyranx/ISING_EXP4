@@ -245,7 +245,7 @@ static vector<double> startSimulation(int L, double beta, double h,int therm_ste
     vals.push_back(sqrt(abs(pow(m_mean, 2) - m2_mean)) / (N - 1));
     vals.push_back(absm_mean);
     vals.push_back(sqrt(abs(pow(absm_mean, 2) - absm2_mean)) / (N - 1));
-    vals.push_back(beta * beta * (e2_mean - e_mean * e_mean) / ((double)(L * L))); //specific heat
+    vals.push_back(beta * beta * (e2_mean - e_mean * e_mean)); //specific heat
     vals.push_back(e2_mean);
     return vals;
    
@@ -288,29 +288,36 @@ int main()
     }
     */
     //temperature
-    double beta = 0.6;
+    //double beta = 0.55;
     //external magnetic field
     double h = 0;
     //number of thermalize sweeps
-    int therm_steps = 100;
+    int therm_steps = 500;
     //sweeps between drawing
     int draw_interval = 20;
     //lattice size
     int L = 128; //actual size is LxL
     //number of draws
     int N = 500; //actual number of sweeps is draw_interval * N
+    //vector<double> betas = { 0.9, 0.7, 0.6, 0.55, 0.5 }; //beta with coldstart
+    //vector<double> betas = { 0.1, 0.2, 0.3,0.35 }; //bet with hotstart
+    //vector<double> betas = {0.445,0.45, 0.465, 0.48}; //beta near critial coldstart
+    vector<double> betas = {0.4, 0.415, 0.43, 0.44};
+    for (double beta : betas)
+    {
+        string filename = "128_Heatbath_beta=" + to_string(beta) + ".txt";
+        vector<double> vals = startSimulation(L, beta, h, therm_steps, N, draw_interval, true);
+        ofstream File(filename);
+        File << fixed << setprecision(8);
+        File << "beta" << "\t" << "<e>" << "\t" << "de" << "\t" << "<m>" << "\t" << "dm" << "\t";
+        File << "<|m|>" << "\t" << "d|m|" << "\t" << "c_v" << "\t" << "<e^2>" << "\n";
+        File << beta << "\t" << vals[0] << "\t" << vals[1] << "\t" << vals[2] << "\t" << vals[3] << "\t" << vals[4] << "\t";
+        File << vals[5] << "\t" << vals[6] << "\t" << vals[7] << "\n";
+        File.close();
 
-    string filename = "128_Heatbath_beta=0.6.txt";
-   
+    }
 
-    vector<double> vals = startSimulation(L, beta, h, therm_steps, N, draw_interval, false);
-    ofstream File(filename);
-    File << fixed << setprecision(8);
-    File << "beta" << "\t" << "<e>" << "\t" << "de" << "\t" << "<m>" << "\t" << "dm" << "\t";
-    File << "<|m|>" << "\t" << "d|m|" << "\t" << "c_v" << "\t" << "<e^2>"  << "\n";
-    File << beta << "\t" << vals[0] << "\t" << vals[1] << "\t" << vals[2] << "\t" << vals[3] << "\t" << vals[4] << "\t";
-    File << vals[5] << "\t" << vals[6] << "\t"<< vals[7] << "\n";
-    File.close();
+    
     
     
 
