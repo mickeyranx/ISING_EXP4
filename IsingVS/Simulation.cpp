@@ -197,8 +197,8 @@ void Simulation::draw(vector<int> &config, int L ,double beta, double h, int dra
     for (int i = 0; i < draw_interval; i++)
     {
         //sweepMetropolis(config, L, beta, h);
-        //sweepMetropolisMultihit(config, L, beta, h, 5);
-        sweepHeatbath(config, L , beta, h);
+        sweepMetropolisMultihit(config, L, beta, h, 5);
+        //sweepHeatbath(config, L , beta, h);
     }
    
 }

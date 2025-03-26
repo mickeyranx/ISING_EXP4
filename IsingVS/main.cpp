@@ -282,7 +282,7 @@ int main()
     }
     */
     //temperature
-    double beta = 0.5;
+    double beta = 0.45;
     //external magnetic field
     double h = 0;
     //number of thermalize sweeps
@@ -292,7 +292,7 @@ int main()
     //lattice size
     int L = 128; //actual size is LxL
     //number of draws
-    int N = 100; //actual number of sweeps is draw_interval * N
+    int N = 500; //actual number of sweeps is draw_interval * N
 
     string filename = "";
    
