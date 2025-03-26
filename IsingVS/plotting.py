@@ -2,8 +2,8 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np 
 
-path="C:/Users/Miki/uni/CPPrakt/ISING_V4/ISING_EXP4/IsingVS/"
-
+#path="C:/Users/Miki/uni/CPPrakt/ISING_V4/ISING_EXP4/IsingVS/"
+path="C:/Users/Miki/work/uni/CPPrakt/ISING_V4/ISING_EXP4/IsingVS/"
 #determine optimal multihit parameter and thermal steps
 def exercise3a():
     

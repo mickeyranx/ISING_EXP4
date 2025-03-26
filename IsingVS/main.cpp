@@ -289,7 +289,7 @@ int main()
     //lattice size
     int L = 128; //actual size is LxL
     //number of draws
-    int N = 2000;
+    int N = 1000;
 
     
    
