@@ -162,14 +162,20 @@ static void explicitIsing(int L) {
 }
 
 //Simulation for exercises 3 and 4
-static vector<double> startSimulation(int L, double beta, double h,int therm_steps, int N, int draw_interval) {
+static vector<double> startSimulation(int L, double beta, double h,int therm_steps, int N, int draw_interval, bool hot_start) {
     //------------------------------
     //            setup
     //------------------------------
-    
+    vector<int> config = {};
+    if (hot_start) {
+        config = Simulation::initializeLatticeHot(L);
 
-    //vector<int> config = Simulation::initializeLatticeCold(L);
-    vector<int> config = Simulation::initializeLatticeHot(L);
+    }
+    else {
+        config = Simulation::initializeLatticeCold(L);
+    }
+    
+   
     for (int i = 0; i < therm_steps; i++)
     {
         //Simulation::sweepHeatbath(config, L, beta, h);
@@ -233,13 +239,14 @@ static vector<double> startSimulation(int L, double beta, double h,int therm_ste
     double m2_mean = accumulate(mag2.begin(), mag2.end(), 0.0) / N;
     double absm_mean = accumulate(absmag1.begin(), absmag1.end(), 0.0) / N;
     double absm2_mean = accumulate(absmag2.begin(), absmag2.end(), 0.0) / N;
-    vals.push_back(e2_mean);
+    vals.push_back(e_mean);
     vals.push_back(sqrt(abs(pow(e_mean, 2) - e2_mean)) / (N - 1));
     vals.push_back(m_mean);
     vals.push_back(sqrt(abs(pow(m_mean, 2) - m2_mean)) / (N - 1));
-    vals.push_back(e2_mean);
+    vals.push_back(absm_mean);
     vals.push_back(sqrt(abs(pow(absm_mean, 2) - absm2_mean)) / (N - 1));
-    vals.push_back(beta * beta * (absm2_mean - absm_mean * absm_mean) / ((double)(L * L))); //specific heat
+    vals.push_back(beta * beta * (e2_mean - e_mean * e_mean) / ((double)(L * L))); //specific heat
+    vals.push_back(e2_mean);
     return vals;
    
 }
@@ -281,26 +288,28 @@ int main()
     }
     */
     //temperature
-    double beta = 0.9;
+    double beta = 0.6;
     //external magnetic field
     double h = 0;
     //number of thermalize sweeps
-    int therm_steps = 10000;
+    int therm_steps = 100;
     //sweeps between drawing
     int draw_interval = 20;
     //lattice size
     int L = 128; //actual size is LxL
     //number of draws
-    int N = 800; //actual number of sweeps is draw_interval * N
+    int N = 500; //actual number of sweeps is draw_interval * N
 
-    string filename = "";
+    string filename = "128_Heatbath_beta=0.6.txt";
    
 
-    vector<double> vals = startSimulation(L, beta, h, therm_steps, N, draw_interval);
-    ofstream File("test.txt");
-    File << fixed << setprecision(5);
-    File << "beta" << "\t" << "<e>" << "\t" << "de" << "\t" << "<m>" << "\t" << "dm" << "\t" << "<|m|>" << "\t" << "d|m|" << "\t" << "c_v" << "\n";
-    File << beta << "\t" << vals[0] << "\t" << vals[1] << "\t" << vals[2] << "\t" << vals[3] << "\t" << vals[4] << "\t" << vals[5] << "\t" << vals[6] << "\n";
+    vector<double> vals = startSimulation(L, beta, h, therm_steps, N, draw_interval, false);
+    ofstream File(filename);
+    File << fixed << setprecision(8);
+    File << "beta" << "\t" << "<e>" << "\t" << "de" << "\t" << "<m>" << "\t" << "dm" << "\t";
+    File << "<|m|>" << "\t" << "d|m|" << "\t" << "c_v" << "\t" << "<e^2>"  << "\n";
+    File << beta << "\t" << vals[0] << "\t" << vals[1] << "\t" << vals[2] << "\t" << vals[3] << "\t" << vals[4] << "\t";
+    File << vals[5] << "\t" << vals[6] << "\t"<< vals[7] << "\n";
     File.close();
     
     
