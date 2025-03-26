@@ -199,9 +199,11 @@ static vector<double> startSimulation(int L, double beta, double h,int therm_ste
         absmag2[i] = absmag_i * absmag_i;
         mag1[i] = M / K;
         mag2[i] = M / K * M / K;
+
+
     }
 
-     
+    /*
     //this part is for testing optilam thermalization and multihit-parameter
     ofstream File("testing_params.txt");
     File << fixed << setprecision(5);
@@ -214,7 +216,7 @@ static vector<double> startSimulation(int L, double beta, double h,int therm_ste
     }
     
     File.close();
-
+    */
 
 
     
@@ -224,7 +226,7 @@ static vector<double> startSimulation(int L, double beta, double h,int therm_ste
     //    calculate observables
     //------------------------------
     vector<double> vals = {};
-    /*
+    
     double e_mean = accumulate(energies1.begin(), energies1.end(), 0.0)/ N;
     double e2_mean = accumulate(energies2.begin(), energies2.end(), 0.0) / N;
     double m_mean = accumulate(mag1.begin(), mag1.end(), 0.0) / N;
@@ -237,7 +239,7 @@ static vector<double> startSimulation(int L, double beta, double h,int therm_ste
     vals.push_back(sqrt(abs(pow(m_mean, 2) - m2_mean)) / (N - 1));
     vals.push_back(e2_mean);
     vals.push_back(sqrt(abs(pow(absm_mean, 2) - absm2_mean)) / (N - 1));
-    */
+    vals.push_back(beta * beta * (absm2_mean - absm_mean * absm_mean) / ((double)(L * L))); //specific heat
     return vals;
    
 }
@@ -283,23 +285,23 @@ int main()
     //external magnetic field
     double h = 0;
     //number of thermalize sweeps
-    int therm_steps = 0;
+    int therm_steps = 10000;
     //sweeps between drawing
-    int draw_interval = 1;
+    int draw_interval = 20;
     //lattice size
     int L = 128; //actual size is LxL
     //number of draws
-    int N = 1000;
+    int N = 800; //actual number of sweeps is draw_interval * N
 
-    
+    string filename = "";
    
 
     vector<double> vals = startSimulation(L, beta, h, therm_steps, N, draw_interval);
-    //ofstream File("test.txt");
-    //File << fixed << setprecision(5);
-    //File << "beta" << "\t" << "<e>" << "\t" << "de" << "\t" << "<m>" << "\t" << "dm" << "\t" << "<|m|>" << "\t" << "d|m|" << "\n";
-    //File << beta << "\t" << vals[0] << "\t" << vals[1] << "\t" << vals[2] << "\t" << vals[3] << "\t" << vals[4] << "\t" << vals[5] << "\n";
-    //File.close();
+    ofstream File("test.txt");
+    File << fixed << setprecision(5);
+    File << "beta" << "\t" << "<e>" << "\t" << "de" << "\t" << "<m>" << "\t" << "dm" << "\t" << "<|m|>" << "\t" << "d|m|" << "\t" << "c_v" << "\n";
+    File << beta << "\t" << vals[0] << "\t" << vals[1] << "\t" << vals[2] << "\t" << vals[3] << "\t" << vals[4] << "\t" << vals[5] << "\t" << vals[6] << "\n";
+    File.close();
     
     
 
